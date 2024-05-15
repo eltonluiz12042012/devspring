@@ -1,6 +1,8 @@
 package com.devspring.devspring.resources;
 
 import com.devspring.devspring.entities.Category;
+import com.devspring.devspring.services.CategoryService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,12 +15,13 @@ import java.util.List;
 @RequestMapping(value = "/categories")
 public class CategoryResource {
 
+    @Autowired
+    private CategoryService service;
+
     @GetMapping
     public ResponseEntity<List<Category>> findAll(){
-        List<Category> lista = new ArrayList<>();
-        lista.add(new Category(1L,"Esportivos" ));
-        lista.add(new Category(2L,"Informática" ));
-        return ResponseEntity.ok(lista);
+        List<Category> categories = service.findAll();
+        return ResponseEntity.ok(categories);
     }
 
 }
