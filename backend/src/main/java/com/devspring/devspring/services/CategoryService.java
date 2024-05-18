@@ -3,14 +3,17 @@ package com.devspring.devspring.services;
 import com.devspring.devspring.dto.CategoryDTO;
 import com.devspring.devspring.entities.Category;
 import com.devspring.devspring.repositories.CategoryRepository;
-import com.devspring.devspring.services.exception.EntityNotFoundException;
+import com.devspring.devspring.services.exception.DatabaseException;
+import com.devspring.devspring.services.exception.ResourceNotFoundException;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class CategoryService {
@@ -33,7 +36,7 @@ public class CategoryService {
     @Transactional(readOnly = true)
     public CategoryDTO findById(Long id) {
         Optional<Category> obj = repository.findById(id);
-        Category category = obj.orElseThrow(()-> new EntityNotFoundException("Entidade não encontrada"));
+        Category category = obj.orElseThrow(()-> new ResourceNotFoundException("Entidade não encontrada"));
         return new CategoryDTO(category);
 
     }
@@ -44,5 +47,30 @@ public class CategoryService {
         entity.setName(dto.getName());
         entity = repository.save(entity);
         return new CategoryDTO(entity);
+    }
+
+    @Transactional
+    public CategoryDTO update(Long id, CategoryDTO dto) {
+        try {
+            Category entity = repository.getReferenceById(id);
+            entity.setName(dto.getName());
+            entity =  repository.save(entity);
+            return new CategoryDTO(entity);
+        }catch (EntityNotFoundException e){
+            throw  new ResourceNotFoundException("Id não existe " + id);
+        }
+    }
+
+    @Transactional(propagation = Propagation.SUPPORTS)
+    public void delete(Long id) {
+        if (!repository.existsById(id)) {
+            throw new ResourceNotFoundException("Recurso não encontrado");
+        }
+        try {
+            repository.deleteById(id);
+        }
+        catch (DataIntegrityViolationException e) {
+            throw new DatabaseException("Falha de integridade referencial");
+        }
     }
 }
